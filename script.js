@@ -11,16 +11,16 @@ const cities = [
     "Бобруйск", "Витебск", "Полоцк"
 ];
 
-// Фиксированное расписание поездов (по 20 поездов в каждом городе)
+// Фиксированное расписание поездов (по 15 поездов в каждом городе)
 const fixedSchedule = [];
 
 function generateFixedSchedule() {
     let trainNumber = 1000;
 
     cities.forEach(city => {
-        for (let i = 0; i < 10; i++) {
+        for (let i = 0; i < 15; i++) {
             let startTime = new Date();
-            startTime.setHours(Math.floor(i * 24 / 20), Math.floor(Math.random() * 60), 0, 0); // Равномерно по дню
+            startTime.setHours(Math.floor(i * 24 / 15), Math.floor(Math.random() * 60), 0, 0); // Равномерно по дню
 
             let routeCities = getRoute(city);
             let schedule = {};
@@ -90,6 +90,13 @@ function getRelevantTrains(city) {
         }
     });
 
+    // Сортируем поезда по времени прибытия (от ближайшего)
+    trains.sort((a, b) => {
+        let timeA = a.прибытие.split(':').map(Number);
+        let timeB = b.прибытие.split(':').map(Number);
+        return timeA[0] * 60 + timeA[1] - (timeB[0] * 60 + timeB[1]);
+    });
+
     return trains;
 }
 
@@ -111,7 +118,7 @@ function updateTable(city) {
     let trainTable = document.getElementById("trainTable");
     trainTable.innerHTML = ""; // Очищаем таблицу
 
-    let trains = getRelevantTrains(city);
+    let trains = getRelevantTrains(city).slice(0, 15); // Ограничиваем 15 ближайшими поездами
 
     if (trains.length === 0) {
         trainTable.innerHTML = `<tr><td colspan="5">Нет предстоящих поездов</td></tr>`;
