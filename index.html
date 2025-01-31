@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Табло поездов</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="background"></div>
+
+    <div class="container">
+    <div class="top-bar">
+        <select id="citySelect"></select>
+        <h1 id="currentDate"></h1>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>№ Поезда</th>
+                    <th>Маршрут</th>
+                    <th>Прибытие</th>
+                    <th>Стоянка</th>
+                    <th>Отправление</th>
+                </tr>
+            </thead>
+            <tbody id="trainTable"></tbody>
+        </table>
+    </div>
+</div>
+
+
+    <script src="script.js"></script>
+</body>
+</html>
