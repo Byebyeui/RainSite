@@ -11,17 +11,16 @@ const cities = [
     "Бобруйск", "Витебск", "Полоцк"
 ];
 
-// Фиксированное расписание поездов (не более 15 поездов на город в сутки)
+// Фиксированное расписание поездов
 const fixedSchedule = {};
 
-// Генерируем расписание (один раз)
 function generateFixedSchedule() {
     cities.forEach(city => {
         fixedSchedule[city] = [];
         let startTime = new Date();
-        startTime.setHours(0, 0, 0, 0); // Начинаем с 00:00
+        startTime.setHours(0, 0, 0, 0);
 
-        for (let i = 0; i < 19; i++) { // 15 поездов в сутки
+        for (let i = 0; i < 19; i++) {
             let arrival = new Date(startTime);
             arrival.setMinutes(arrival.getMinutes() + Math.floor(Math.random() * 60) + 30); // Интервал 30-90 мин
 
@@ -36,7 +35,7 @@ function generateFixedSchedule() {
                 номер: Math.floor(1000 + Math.random() * 9000), // Случайный номер поезда
                 маршрут: route,
                 прибытие: formatTime(arrival),
-                стоянка: (departure - arrival) / 60000, // Длительность стоянки (в минутах)
+                стоянка: (departure - arrival) / 60000, // Длительность стоянки
                 отправление: formatTime(departure)
             };
 
@@ -67,7 +66,7 @@ function getRelevantTrains(city) {
         let trainTime = new Date();
         trainTime.setHours(hours, minutes, 0, 0);
         return trainTime >= now; // Только поезда, которые ещё не прибыли
-    }).slice(0, 15); // Максимум 15 поездов в таблице
+    }).slice(0, 19); // Максимум поездов в таблице
 }
 
 // Обновление таблицы
