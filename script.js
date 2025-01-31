@@ -11,106 +11,63 @@ const cities = [
     "Бобруйск", "Витебск", "Полоцк"
 ];
 
-// Фиксированное расписание поездов (по 15 поездов в каждом городе)
-const fixedSchedule = [];
+// Фиксированное расписание поездов (не более 15 поездов на город в сутки)
+const fixedSchedule = {};
 
+// Генерируем расписание (один раз)
 function generateFixedSchedule() {
-    let trainNumber = 1000;
-
     cities.forEach(city => {
-        for (let i = 0; i < 15; i++) {
-            let startTime = new Date();
-            startTime.setHours(Math.floor(i * 24 / 15), Math.floor(Math.random() * 60), 0, 0); // Равномерно по дню
+        fixedSchedule[city] = [];
+        let startTime = new Date();
+        startTime.setHours(0, 0, 0, 0); // Начинаем с 00:00
 
-            let routeCities = getRoute(city);
-            let schedule = {};
+        for (let i = 0; i < 15; i++) { // 15 поездов в сутки
+            let arrival = new Date(startTime);
+            arrival.setMinutes(arrival.getMinutes() + Math.floor(Math.random() * 60) + 30); // Интервал 30-90 мин
 
-            let travelTime = 0;
-            routeCities.forEach((stopCity, index) => {
-                if (index === 0) {
-                    schedule[stopCity] = formatTime(startTime);
-                } else {
-                    travelTime += Math.floor(Math.random() * 90) + 30; // Поездка от 30 до 120 минут
-                    let arrivalTime = new Date(startTime.getTime() + travelTime * 60000);
-                    schedule[stopCity] = formatTime(arrivalTime);
-                }
-            });
+            let departure = new Date(arrival);
+            departure.setMinutes(departure.getMinutes() + Math.floor(Math.random() * 10) + 3); // Стоянка 3-12 мин
+
+            let fromCity = getRandomCity();
+            let toCity = getRandomCity(fromCity);
+            let route = `${fromCity} - ${toCity}`;
 
             let train = {
-                номер: trainNumber++,
-                маршрут: `${routeCities[0]} - ${routeCities[routeCities.length - 1]}`,
-                остановки: schedule,
-                стоянка: Math.floor(Math.random() * 8) + 3 // Стоянка от 3 до 10 минут
+                номер: Math.floor(1000 + Math.random() * 9000), // Случайный номер поезда
+                маршрут: route,
+                прибытие: formatTime(arrival),
+                стоянка: (departure - arrival) / 60000, // Длительность стоянки (в минутах)
+                отправление: formatTime(departure)
             };
 
-            fixedSchedule.push(train);
+            fixedSchedule[city].push(train);
+            startTime = new Date(departure); // Следующий поезд после отправления
         }
     });
 }
 
-// Генерирует маршрут для поезда (от 2 до 5 городов)
-function getRoute(startCity) {
-    let route = [startCity];
-    let availableCities = cities.filter(city => city !== startCity);
-    let stops = Math.floor(Math.random() * 3) + 2; // От 2 до 5 городов в маршруте
-
-    for (let i = 0; i < stops; i++) {
-        let nextCity = availableCities.splice(Math.floor(Math.random() * availableCities.length), 1)[0];
-        route.push(nextCity);
-    }
-
-    return route;
+// Функция для получения случайного города (кроме переданного)
+function getRandomCity(exclude = "") {
+    let filteredCities = cities.filter(city => city !== exclude);
+    return filteredCities[Math.floor(Math.random() * filteredCities.length)];
 }
 
-// Форматирует время (ЧЧ:ММ)
+// Форматируем время (ЧЧ:ММ)
 function formatTime(date) {
     return `${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`;
 }
 
-// Фильтрация поездов: показываем только те, что ещё не прибыли в выбранный город
+// Фильтруем только актуальные поезда на сегодня
 function getRelevantTrains(city) {
     let now = new Date();
-    let trains = [];
+    let schedule = fixedSchedule[city] || [];
 
-    fixedSchedule.forEach(train => {
-        if (train.остановки[city]) {
-            let [hours, minutes] = train.остановки[city].split(':').map(Number);
-            let trainTime = new Date();
-            trainTime.setHours(hours, minutes, 0, 0);
-
-            if (trainTime >= now) { // Только будущие поезда
-                trains.push({
-                    номер: train.номер,
-                    маршрут: train.маршрут,
-                    прибытие: train.остановки[city],
-                    стоянка: train.стоянка,
-                    отправление: calculateDepartureTime(train.остановки[city], train.стоянка)
-                });
-            }
-        }
-    });
-
-    // Сортируем поезда по времени прибытия (от ближайшего)
-    trains.sort((a, b) => {
-        let timeA = a.прибытие.split(':').map(Number);
-        let timeB = b.прибытие.split(':').map(Number);
-        return timeA[0] * 60 + timeA[1] - (timeB[0] * 60 + timeB[1]);
-    });
-
-    return trains;
-}
-
-// Функция для расчёта времени отправления
-function calculateDepartureTime(arrivalTime, stopDuration) {
-    let [hours, minutes] = arrivalTime.split(':').map(Number);
-    let departureMinutes = minutes + stopDuration;
-
-    if (departureMinutes >= 60) {
-        hours += Math.floor(departureMinutes / 60);
-        departureMinutes %= 60;
-    }
-
-    return `${hours.toString().padStart(2, "0")}:${departureMinutes.toString().padStart(2, "0")}`;
+    return schedule.filter(train => {
+        let [hours, minutes] = train.прибытие.split(':').map(Number);
+        let trainTime = new Date();
+        trainTime.setHours(hours, minutes, 0, 0);
+        return trainTime >= now; // Только поезда, которые ещё не прибыли
+    }).slice(0, 15); // Максимум 15 поездов в таблице
 }
 
 // Обновление таблицы
@@ -118,7 +75,7 @@ function updateTable(city) {
     let trainTable = document.getElementById("trainTable");
     trainTable.innerHTML = ""; // Очищаем таблицу
 
-    let trains = getRelevantTrains(city).slice(0, 15); // Ограничиваем 15 ближайшими поездами
+    let trains = getRelevantTrains(city);
 
     if (trains.length === 0) {
         trainTable.innerHTML = `<tr><td colspan="5">Нет предстоящих поездов</td></tr>`;
