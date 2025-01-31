@@ -21,7 +21,7 @@ function generateFixedSchedule() {
         let startTime = new Date();
         startTime.setHours(0, 0, 0, 0); // Начинаем с 00:00
 
-        for (let i = 0; i < 15; i++) { // 15 поездов в сутки
+        for (let i = 0; i < 19; i++) { // 15 поездов в сутки
             let arrival = new Date(startTime);
             arrival.setMinutes(arrival.getMinutes() + Math.floor(Math.random() * 60) + 30); // Интервал 30-90 мин
 
