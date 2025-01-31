@@ -18,7 +18,7 @@ function generateFixedSchedule() {
     let trainNumber = 1000;
 
     cities.forEach(city => {
-        for (let i = 0; i < 20; i++) {
+        for (let i = 0; i < 10; i++) {
             let startTime = new Date();
             startTime.setHours(Math.floor(i * 24 / 20), Math.floor(Math.random() * 60), 0, 0); // Равномерно по дню
 
