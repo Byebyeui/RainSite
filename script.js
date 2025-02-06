@@ -1,124 +1,130 @@
-const apiKey = "d1cfa09d-ef66-4548-a6e6-34e759ab0c84";
-const apiBaseUrl = "https://api.rasp.yandex.net/v3.0";
+const apiKey = 'd1cfa09d-ef66-4548-a6e6-34e759ab0c84'; // Вставь свой API ключ
+const proxyUrl = 'https://cors-anywhere.herokuapp.com/'; // Прокси сервер
 
-// Города и их коды станций
+// Массив с городами
+const cities = [
+    "Минск", "Орша", "Молодечно", "Борисов", "Барановичи", "Гродно", "Лида", "Лунинец",
+    "Брест", "Пинск", "Гомель", "Калинковичи", "Жлобин", "Могилев", "Кричев", "Осиповичи",
+    "Бобруйск", "Витебск", "Полоцк"
+];
+
+// Коды станций
 const cityCodes = {
     "Минск": "s9600216",
-    "Орша": "s9600228",
-    "Молодечно": "s9600219",
-    "Борисов": "s9600230",
-    "Барановичи": "s9600240",
-    "Гродно": "s9600250",
-    "Лида": "s9600260",
-    "Лунинец": "s9600270",
-    "Брест": "s9600280",
-    "Пинск": "s9600290",
-    "Гомель": "s9600300",
-    "Калинковичи": "s9600310",
-    "Жлобин": "s9600320",
-    "Могилев": "s9600330",
-    "Кричев": "s9600340",
-    "Осиповичи": "s9600350",
-    "Бобруйск": "s9600360",
-    "Витебск": "s9600370",
-    "Полоцк": "s9600380"
+    "Орша": "s9600060",
+    "Молодечно": "s9600230",
+    "Борисов": "s9600406",
+    "Барановичи": "s9600173",
+    "Гродно": "s9600113",
+    "Лида": "s9600069",
+    "Лунинец": "s9600466",
+    "Брест": "s9600140",
+    "Пинск": "s9600192",
+    "Гомель": "s9600228",
+    "Калинковичи": "s9600222",
+    "Жлобин": "s9600067",
+    "Могилев": "s9600170",
+    "Кричев": "s9600311",
+    "Осиповичи": "s9600178",
+    "Бобруйск": "s9600153",
+    "Витебск": "s9600224",
+    "Полоцк": "s9600294"
 };
 
-// Получаем текущую дату в формате YYYY-MM-DD
-function getCurrentDate() {
-    let now = new Date();
-    return now.toISOString().split('T')[0]; // "2025-02-01"
-}
-
-// Функция для загрузки расписания поездов
-async function fetchTrainSchedule(city, date) {
-    let stationCode = cityCodes[city];
-    if (!stationCode) {
-        console.error("Ошибка: не найден код станции для города", city);
-        return;
-    }
-
-    let url = `${apiBaseUrl}/schedule/?apikey=${apiKey}&station=${stationCode}&transport_type=train&date=${date}`;
-
-    try {
-        let response = await fetch(url);
-        let data = await response.json();
-        console.log("Ответ API:", data); // Проверяем, что пришло
-
-        if (data.schedule && data.schedule.length > 0) {
-            updateTable(data.schedule);
-        } else {
-            console.warn("Нет данных о поездах на выбранный день.");
-            document.getElementById("trainTable").innerHTML = "<tr><td colspan='5'>Нет поездов</td></tr>";
-        }
-    } catch (error) {
-        console.error("Ошибка при загрузке данных:", error);
-    }
-}
-
-// Обновляем таблицу
-function updateTable(trains) {
-    let now = new Date();
-    let trainTable = document.getElementById("trainTable");
-    trainTable.innerHTML = ""; // Очищаем таблицу перед обновлением
-
-    // Фильтруем поезда, которые отправляются позже текущего времени
-    let filteredTrains = trains.filter(train => {
-        if (!train.departure) return false; // Если нет времени отправления — пропускаем
-
-        let [hours, minutes] = train.departure.split(':').map(Number);
-        let trainTime = new Date();
-        trainTime.setHours(hours, minutes, 0, 0);
-
-        return trainTime >= now;
-    });
-
-    // Ограничиваем 15 поездами
-    filteredTrains = filteredTrains.slice(0, 15);
-
-    if (filteredTrains.length === 0) {
-        trainTable.innerHTML = "<tr><td colspan='5'>Нет поездов</td></tr>";
-        return;
-    }
-
-    // Заполняем таблицу
-    filteredTrains.forEach(train => {
-        let row = `
-            <tr>
-                <td>${train.thread ? train.thread.number : '—'}</td>
-                <td>${train.thread ? train.thread.title : '—'}</td>
-                <td>${train.arrival || '—'}</td>
-                <td>${train.stops || '—'}</td>
-                <td>${train.departure || '—'}</td>
-            </tr>
-        `;
-        trainTable.innerHTML += row;
-    });
-}
-
-// Функция для обновления расписания при смене города или даты
-function updateSchedule() {
-    let city = document.getElementById("citySelect").value;
-    let date = document.getElementById("dateSelect").value || getCurrentDate();
-    fetchTrainSchedule(city, date);
-}
-
-// Создание выпадающего списка городов
+// Функция для заполнения выпадающего списка городов
 function populateCitySelect() {
-    let citySelect = document.getElementById("citySelect");
-
-    Object.keys(cityCodes).forEach(city => {
-        let option = document.createElement("option");
+    const citySelect = document.getElementById("citySelect");
+    cities.forEach(city => {
+        const option = document.createElement("option");
         option.value = city;
         option.textContent = city;
         citySelect.appendChild(option);
     });
 
+    // При изменении города обновляем расписание
     citySelect.addEventListener("change", updateSchedule);
 }
 
-// Инициализация при загрузке страницы
-window.onload = function () {
+// Функция для получения данных с расписанием поездов
+async function fetchTrainSchedule(cityCode, date) {
+    try {
+        const url = `${proxyUrl}https://api.rasp.yandex.net/v3.0/schedule/?apikey=${apiKey}&station=${cityCode}&transport_type=train&date=${date}`;
+        const response = await fetch(url);
+
+        // Проверяем успешность запроса
+        if (!response.ok) {
+            throw new Error("Ошибка при загрузке данных");
+        }
+
+        const data = await response.json();
+
+        // Выводим полный ответ API в консоль для дебага
+        console.log("Ответ API:", data);
+
+        return data;
+    } catch (error) {
+        console.error("Ошибка при загрузке данных:", error);
+    }
+}
+
+// Функция для отображения расписания поездов
+function displayTrainSchedule(schedule) {
+    const trainTable = document.getElementById("trainTable");
+    trainTable.innerHTML = ''; // Очистить таблицу
+
+    schedule.forEach(train => {
+        const row = document.createElement("tr");
+
+        const trainNumber = document.createElement("td");
+        trainNumber.textContent = train.train.num;
+        row.appendChild(trainNumber);
+
+        const route = document.createElement("td");
+        route.textContent = `${train.station_from.title} - ${train.station_to.title}`;
+        row.appendChild(route);
+
+        const arrival = document.createElement("td");
+        arrival.textContent = train.arrival;
+        row.appendChild(arrival);
+
+        const stop = document.createElement("td");
+        stop.textContent = train.stop;
+        row.appendChild(stop);
+
+        const departure = document.createElement("td");
+        departure.textContent = train.departure;
+        row.appendChild(departure);
+
+        trainTable.appendChild(row);
+    });
+}
+
+// Функция для обновления расписания
+async function updateSchedule() {
+    const citySelect = document.getElementById("citySelect");
+    const city = citySelect.value;
+    const date = document.getElementById("dateSelect").value;
+
+    // Получаем код станции для города
+    const cityCode = cityCodes[city];
+
+    if (!cityCode) {
+        console.error("Код города не найден:", city);
+        return;
+    }
+
+    // Выводим код города в консоль для проверки
+    console.log("Используем код города:", cityCode);
+
+    const data = await fetchTrainSchedule(cityCode, date);
+    if (data && data.schedule) {
+        displayTrainSchedule(data.schedule);
+    } else {
+        console.error("Ошибка в данных расписания");
+    }
+}
+
+// Инициализация страницы
+document.addEventListener("DOMContentLoaded", function() {
     populateCitySelect();
-    updateSchedule();
-};
+});
